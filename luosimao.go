@@ -14,18 +14,18 @@ const (
 	voiceURL = "http://voice-api.luosimao.com/v1/verify.json"
 )
 
-// Client ...
+// Client : a SDK client for luosimao.com
 type Client struct {
 	KeySMS   string
 	KeyVoice string
 }
 
-// SendSMS ...
+// SendSMS : send a SMS message to the mobile number
 func (c Client) SendSMS(mobile interface{}, message string) error {
 	params := url.Values{}
 	params.Add("mobile", fmt.Sprint(mobile))
 	params.Add("message", message)
-	body, err := httpDo("POST", smsURL, c.Key, params)
+	body, err := httpDo("POST", smsURL, c.KeySMS, params)
 	if err != nil {
 		return err
 	}
@@ -33,6 +33,28 @@ func (c Client) SendSMS(mobile interface{}, message string) error {
 		Msg   string `json:"msg"`
 		Error int    `json:"error"`
 	}{"Unkonw Error", -1}
+	if err = json.Unmarshal(body, &result); err != nil {
+		return err
+	}
+	if result.Error != 0 {
+		err = fmt.Errorf(result.Msg)
+	}
+	return err
+}
+
+// SendVoice : send a voico message to the mobile number
+func (c Client) SendVoice(mobile, code interface{}) error {
+	params := url.Values{}
+	params.Add("mobile", fmt.Sprint(mobile))
+	params.Add("code", fmt.Sprint(code))
+	body, err := httpDo("POST", voiceURL, c.KeyVoice, params)
+	if err != nil {
+		return err
+	}
+	result := struct {
+		Msg   string `json:"msg"`
+		Error int    `json:"error"`
+	}{"Unkown error.", -1}
 	if err = json.Unmarshal(body, &result); err != nil {
 		return err
 	}
